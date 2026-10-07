@@ -5,8 +5,7 @@
 La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar más de **2.3 millones de registros** de 2016 y proporcionar recomendaciones sobre proveedores, lead time, análisis ABC, punto de reorden y EOQ.
 ## Pipeline del proyecto
 ![imagen de baner](<Picture/PIPELINE_BANNER.png>)
-Link de base de datos: https://www.kaggle.com/datasets/bhanupratapbiswas/inventory-analysis-case-study?select=2017PurchasePricesDec.csv
-
+Link de base de datos: https://www.kaggle.com/datasets/bhanupratapbiswas/inventory-analysis-case-study
 ## ⚙️ Configuración del Entorno e Ingesta de Datos (Setup)
 
 El proceso de carga inicial (ETL) extrae los archivos CSV directamente desde Databricks Volumes, aplica transformaciones de limpieza en tiempo de ejecución y materializa las tablas en el entorno de trabajo.
