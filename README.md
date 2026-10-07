@@ -2,7 +2,11 @@
 ![imagen de baner](<Picture/SQL_BANER.png>)
 
 ## 📌Resumen (Overview)
-La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar más de **2.3 millones de registros** de 2016 y proporcionar recomendaciones sobre proveedores, lead time, análisis ABC, punto de reorden y EOQ.
+La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar más de **2.3 millones de registros** de 2016 y proporcionar recomendaciones sobre proveedores, lead time, análisis ABC, punto de reorden y EOQ. 
+<p align="center">
+ <a href="www.linkedin.com/in/guimar-espettia">
+    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" />
+
 ## Pipeline del proyecto
 ![imagen de baner](<Picture/PIPELINE_BANNER.png>)
 Link de base de datos: https://www.kaggle.com/datasets/bhanupratapbiswas/inventory-analysis-case-study
