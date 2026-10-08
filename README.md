@@ -35,22 +35,7 @@ FROM read_files(
   format => 'csv', header => true, inferSchema => true
 );
 ```
-*(Nota: Este mismo patrón de ingesta y limpieza `CAST(...) AS DATE` y `TRIM(...)` se aplica para iterar sobre las tablas `Purchases`, `InvoicePurchases`, `BegInv`, `EndInv` y `2017PurchasePricesDec`).*
-
-**3. Auditoría post-carga (Data Quality Check)**
-Ejecución de una consulta consolidada para auditar el volumen de datos ingestados y validar los rangos de fechas operativas. Este paso fue crucial para detectar el truncamiento del archivo original de ventas por el límite físico de filas de Excel.
-```sql
-SELECT 'sales' AS tabla, COUNT(*) AS filas, MIN(SalesDate) AS desde, MAX(SalesDate) AS hasta FROM `workspace`.`default`.`SalesFINAL12312016`
-UNION ALL 
-SELECT 'purchases', COUNT(*), MIN(ReceivingDate), MAX(ReceivingDate) FROM `workspace`.`default`.`PurchasesFINAL12312016`
-UNION ALL 
-SELECT 'invoice_purchases', COUNT(*), MIN(InvoiceDate), MAX(InvoiceDate) FROM `workspace`.`default`.`InvoicePurchases12312016`
-UNION ALL 
-SELECT 'beg_inv', COUNT(*), MIN(startDate), MAX(startDate) FROM `workspace`.`default`.`BegInvFINAL12312016`
-UNION ALL 
-SELECT 'end_inv', COUNT(*), MIN(endDate), MAX(endDate) FROM `workspace`.`default`.`EndInvFINAL12312016`;
-
-
+(Nota: Utilize este mismo patron para las demas tablas).
 
 
 ## 🛠️ Limpieza de Datos y Transformaciones (ETL)
@@ -62,6 +47,7 @@ to_date(SalesDate, 'M/d/yyyy') AS SalesDate,
 CAST(PODate AS DATE) AS PODate,
 CAST(PayDate AS DATE) AS PayDate
 ```
+
 
 **2. Homologación de llaves y limpieza de texto**
 Renombramiento de llaves principales (`VendorNumber`) y uso de `TRIM()` junto con agrupaciones (`MAX`) para evitar duplicados por espacios o errores de tipeo.
