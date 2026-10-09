@@ -32,7 +32,6 @@ SELECT
   TRIM(VendorName) AS VendorName
 FROM read_files(
   '/Volumes/workspace/default/inventory_files/SalesFINAL12312016.csv',
-  format => 'csv', header => true, inferSchema => true
 );
 ```
 (Nota: Utilize este mismo patron para las demas tablas).
@@ -57,29 +56,315 @@ TRIM(VendorName) AS VendorName,
 MAX(VendorName) AS proveedor
 ```
 
+ 
 **3. Calidad de datos y prevención de errores matemáticos**
-Filtros de ruido estadístico (mínimo 5 facturas para el flete) y prevención de divisiones por cero en el cálculo del EOQ.
+Filtro de precios en cero para evitar divisiones por cero en el cálculo del margen, y `LEFT JOIN` con `COALESCE` para conservar productos sin stock en el reporte ABC.
 ```sql
-HAVING COUNT(*) >= 5 AND SUM(Dollars) > 0
-WHERE Quantity > 0 AND c.costo_unit > 0
+WHERE Price > 0
+COALESCE(i.stock_final_unid, 0) AS stock_final_unid
 ```
 
-**4. Modelado estocástico (Demanda y Varianza)**
-Consolidación de ventas por día y cálculo robusto de la desviación estándar, usando `GREATEST` para evitar varianzas negativas por redondeos en días sin ventas.
+
+## Pregunta #1: ¿Cuáles son los 10 productos más vendidos por unidades?
+ 
+Aquí, sumé las unidades vendidas por marca y descripción, y ordené de mayor a menor para quedarme con los 10 primeros.
+ 
 ```sql
-SELECT InventoryId, SalesDate, SUM(SalesQuantity) AS q FROM sales GROUP BY InventoryId, SalesDate;
-
-sqrt(GREATEST(SUM(d.q * d.q) / p.n_dias - pow(SUM(d.q) / p.n_dias, 2), 0)) AS sigma_diaria
+-- Top 10 productos por unidades vendidas --
+ 
+SELECT Brand, Description, SUM(SalesQuantity) AS Unidades_Vendidas
+FROM ventas
+GROUP BY Brand, Description
+ORDER BY Unidades_Vendidas DESC
+LIMIT 10;
 ```
+ 
+**Top 10 productos por unidades vendidas**
+ 
+Hallazgos: 
 
-**5. Tratamiento de nulos y cruces de auditoría**
-Imputación de stock en cero para productos faltantes (`COALESCE`) y uso de `LEFT ANTI JOIN` para detectar quiebres de catálogo entre inventarios sin generar duplicados.
+![Imagen de query](<Picture/P1_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #2: ¿Cuántas facturas y cuánto flete total se registran cada mes?
+ 
+Aquí, agrupé las facturas de compra por mes (formato `yyyy-MM`), conté las facturas y sumé el flete en dólares.
+ 
 ```sql
-COALESCE(e.onHand, 0) AS onHand,
-COALESCE(l.lead_dias, lg.lead_dias) AS lead_dias
-
-SELECT b.* FROM beg_inv b LEFT ANTI JOIN end_inv e ON b.InventoryId = e.InventoryId
+-- Cantidad de facturas y flete total por mes --
+ 
+SELECT date_format(InvoiceDate, 'yyyy-MM') AS Mes,
+       COUNT(*) AS facturas,
+       ROUND(SUM(Freight), 0) AS Flete_USD
+FROM facturas_compra
+GROUP BY mes
+ORDER BY mes;
 ```
+ 
+**Facturas y flete total por mes**
+ 
+Hallazgos: 
+
+![Imagen de query](<Picture/P2_sql.png>)
+ 
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #3: ¿Quiénes son los 10 principales proveedores por monto comprado en 2016 y qué porcentaje del total representan?
+ 
+Aquí, sumé el monto y las unidades compradas por proveedor, y calculé su participación sobre el total con una función de ventana (`SUM(SUM(Dollars)) OVER ()`).
+ 
+```sql
+-- Top 10 proveedores por monto comprado en 2016 y % del total --
+ 
+SELECT
+  VendorNumber, VendorName AS proveedor,
+  ROUND(SUM(Dollars), 2) AS total_comprado,
+  SUM(Quantity)      AS unidades,
+  ROUND(100 * SUM(Dollars) / SUM(SUM(Dollars)) OVER (), 2) AS porcentaje_total
+FROM compras
+GROUP BY VendorNumber, VendorName
+ORDER BY total_comprado DESC
+LIMIT 10;
+```
+ 
+**Top 10 proveedores por monto comprado**
+ 
+Hallazgos:
+
+ ![Imagen de query](<Picture/P3_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #4: ¿Cómo evolucionan las compras mensuales y cuánto cambian frente al mes anterior?
+ 
+Aquí, calculé el total comprado por mes desde enero de 2016 en una CTE, y luego usé `LAG` para obtener la diferencia contra el mes anterior.
+ 
+```sql
+-- Compras por mes y cambio contra el mes anterior --
+ 
+WITH mensual AS (
+  SELECT date_format(PODate, 'yyyy-MM') AS mes,
+         ROUND(SUM(Dollars), 0) AS compras_usd
+  FROM compras
+  WHERE PODate >= '2016-01-01'
+  GROUP BY mes
+)
+SELECT mes, compras_usd,
+       compras_usd - LAG(compras_usd) OVER (ORDER BY mes) AS cambio_usd
+FROM mensual
+ORDER BY mes;
+```
+ 
+**Compras mensuales y variación contra el mes anterior**
+ 
+Hallazgos: 
+
+![Imagen de query](<Picture/P4_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #5: ¿Cómo se comportan las unidades, las ventas y el precio promedio por mes y tipo de producto?
+ 
+Aquí, agrupé las ventas por mes y clasificación (1 = Licor, 2 = Vino), y calculé unidades, ventas en dólares y precio promedio.
+ 
+```sql
+-- Unidades y dólares vendidos por mes y clasificación --
+ 
+SELECT
+  date_format(SalesDate, 'yyyy-MM') AS mes,
+  CASE Classification WHEN 1 THEN 'Licor' WHEN 2 THEN 'Vino' END AS tipo_producto,
+  SUM(SalesQuantity) AS unidades_vendidas,
+  ROUND(SUM(SalesDollars), 2) AS ventas_usd,
+  ROUND(SUM(SalesDollars) / SUM(SalesQuantity), 2) AS precio_promedio
+FROM ventas
+GROUP BY date_format(SalesDate, 'yyyy-MM'), Classification
+ORDER BY mes, tipo_producto;
+```
+ 
+**Ventas por mes y tipo de producto**
+ 
+Hallazgos: ![Imagen de query](<Picture/P5_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #6: ¿Cuál es el lead time promedio de cada proveedor (recepción menos orden de compra)?
+ 
+Aquí, calculé la diferencia en días entre la fecha de recepción y la fecha de la orden de compra, y obtuve el promedio y el máximo por proveedor, junto con el número de órdenes, las unidades y el monto comprado.
+ 
+```sql
+-- Lead time promedio por proveedor (Recepción - PO) --
+ 
+SELECT
+  VendorNumber AS VendorID,
+  VendorName AS proveedor,
+  COUNT(DISTINCT PONumber) AS ordenes_compra,
+  SUM(Quantity) AS unidades_recibidas,
+  ROUND(SUM(Dollars), 2) AS monto_comprado,
+  ROUND(AVG(datediff(ReceivingDate, PODate)), 2) AS lead_time_prom_dias,
+  MAX(datediff(ReceivingDate, PODate)) AS lead_time_max_dias
+FROM compras
+GROUP BY VendorNumber, VendorName
+ORDER BY lead_time_prom_dias ASC;
+```
+ 
+**Lead time promedio por proveedor**
+ 
+Hallazgos: ![Imagen de query](<Picture/P6_sql.png>)
+ 
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #7: ¿Cuál es el margen promedio por tipo de producto (precio de venta vs. precio de compra)?
+ 
+Aquí, usé la lista de precios 2017 para comparar el precio de compra con el de venta, y calculé el margen porcentual promedio por tipo de producto, excluyendo los precios en cero.
+ 
+```sql
+-- Margen promedio por tipo de producto (precio de venta vs precio de compra) --
+ 
+SELECT CASE Classification WHEN 1 THEN 'Licor' WHEN 2 THEN 'Vino' END AS tipo_producto,
+       COUNT(*)                                                  AS productos,
+       ROUND(AVG(PurchasePrice), 2)                              AS precio_compra_prom,
+       ROUND(AVG(Price), 2)                                      AS precio_venta_prom,
+       ROUND(100 * AVG((Price - PurchasePrice) / Price), 1)      AS margen_prom_pct
+FROM lista_precios_2017
+WHERE Price > 0
+GROUP BY Classification
+ORDER BY tipo_producto;
+```
+ 
+**Margen promedio por tipo de producto**
+ 
+Hallazgos: ![Imagen de query](<Picture/P7_sql.png>)
+ 
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #8: ¿Cómo se clasifican los productos según el análisis ABC?
+ 
+Aquí, primero creé una vista temporal que acumula el porcentaje de ventas por producto y asigna la clase: **A** (hasta el 80 % acumulado), **B** (hasta el 95 %) y **C** (el resto). Después armé el reporte final, agregando el stock final de cada producto.
+ 
+### Paso 1: Vista temporal con la clasificación ABC
+ 
+```sql
+-- Vista temporal: cálculo estricto de clasificación ABC --
+ 
+CREATE OR REPLACE TEMP VIEW abc_productos AS
+WITH ventas_producto AS (
+  SELECT Brand AS sku, Description AS descripcion,
+         SUM(SalesQuantity) AS unidades_vendidas,
+         SUM(SalesDollars)  AS ventas
+  FROM ventas
+  GROUP BY Brand, Description
+),
+acum AS (
+  SELECT *,
+         ventas / SUM(ventas) OVER () AS pct,
+         SUM(ventas) OVER (ORDER BY ventas DESC, sku) / SUM(ventas) OVER () AS pct_acum
+  FROM ventas_producto
+)
+SELECT *,
+       CASE WHEN pct_acum - pct < 0.80 THEN 'A'
+            WHEN pct_acum - pct < 0.95 THEN 'B'
+            ELSE 'C' END AS clase
+FROM acum;
+```
+ 
+### Paso 2: Reporte de clasificación ABC final
+ 
+```sql
+-- Reporte de clasificación ABC final --
+ 
+SELECT a.sku,
+       a.descripcion,
+       a.unidades_vendidas,
+       ROUND(a.ventas / a.unidades_vendidas, 2) AS precio_unitario,
+       ROUND(a.ventas, 2)                       AS ventas_usd,
+       ROUND(100 * a.pct, 2)                    AS pct_participacion,
+       ROUND(100 * a.pct_acum, 2)               AS pct_acumulado,
+       a.clase                                  AS categoria_abc,
+       COALESCE(i.stock_final_unid, 0)          AS stock_final_unid
+FROM abc_productos a
+LEFT JOIN (SELECT Brand, SUM(onHand) AS stock_final_unid
+           FROM inventario_final GROUP BY Brand) i ON a.sku = i.Brand
+ORDER BY a.ventas DESC;
+```
+ 
+**Clasificación ABC de productos**
+ 
+_Hallazgos: ![Imagen de query](<Picture/P8_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #9: ¿Cuántos productos tiene cada clase ABC y qué porcentaje de las ventas y del capital en inventario concentra?
+ 
+Aquí, usé la vista `abc_productos` y la uní con el inventario final valorizado (`onHand * Price`), para comparar el peso de cada clase en ventas contra su peso en capital inmovilizado.
+ 
+```sql
+-- Por clase ABC: cuántos productos, % de ventas y % del capital en inventario --
+ 
+SELECT a.clase,
+       COUNT(*) AS productos,
+       ROUND(100 * SUM(a.ventas) / SUM(SUM(a.ventas)) OVER (), 1) AS pct_ventas,
+       ROUND(100 * SUM(i.valor) / SUM(SUM(i.valor)) OVER (), 1)   AS pct_capital_inventario
+FROM abc_productos a
+LEFT JOIN (SELECT Brand, SUM(onHand * Price) AS valor FROM inventario_final GROUP BY Brand) i ON a.sku = i.Brand
+GROUP BY a.clase
+ORDER BY a.clase;
+```
+ 
+**Productos, % de ventas y % del capital en inventario por clase ABC**
+ 
+Hallazgos:
+
+![Imagen de query](<Picture/P9_sql.png>)
+ 
+_Recomendación: (completar)_
+ 
+---
+ 
+## Pregunta #10: ¿Qué proveedores concentran más ventas de productos clase A (dependencia de proveedores)?
+ 
+Aquí, uní los productos clase A con la lista de precios para identificar a su proveedor, y calculé cuántos productos aporta cada uno, sus ventas y qué porcentaje representan dentro de la clase A.
+ 
+```sql
+-- Top 10 proveedores por ventas de productos clase A (dependencia de proveedores) --
+ 
+SELECT p.VendorName AS proveedor,
+       COUNT(*) AS productos_clase_a,
+       ROUND(SUM(a.ventas), 2) AS ventas_usd,
+       ROUND(100 * SUM(a.ventas) / SUM(SUM(a.ventas)) OVER (), 1) AS pct_ventas_proveedores_top
+FROM abc_productos a
+JOIN lista_precios_2017 p ON a.sku = p.Brand
+WHERE a.clase = 'A'
+GROUP BY p.VendorName
+ORDER BY ventas_usd DESC
+LIMIT 10;
+```
+ 
+**Top 10 proveedores por ventas de productos clase A**
+ 
+Hallazgos:![Imagen de query](<Picture/P10_sql.png>)
+ 
+_Recomendación: (completar)_
+
 ## 📊 Conclusiones y Hallazgos de Negocio
 
 1. **Alta concentración de riesgo en proveedores:** Los 10 proveedores principales concentran el **65.3%** del gasto total ($321.9 M). *Diageo North America* por sí solo representa el **15.8%**. **Acción:** Diversificar el pool de proveedores y renegociar Acuerdos de Nivel de Servicio (SLA) para mitigar riesgos de desabastecimiento.
