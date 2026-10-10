@@ -1,4 +1,4 @@
-# Proyecto SQL: Inventory Analysis
+# Proyecto SQL: Analisis de Inventario Logístico
 ![imagen de baner](<Picture/SQL_BANER.png>)
 
 ## 📌Resumen (Overview)
