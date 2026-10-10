@@ -7,6 +7,19 @@ La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar
 <p align="center">
  <a href="https://www.linkedin.com/in/guimar-espettia">
     <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" />
+   </a>
+</p>
+
+## 📂 Archivos de datos (CSV)
+
+| CSV | Resumen | Columnas |
+|---|---|---|
+| `SalesFINAL12312016.csv` | Ventas diarias por tienda y producto. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `SalesQuantity`, `SalesDollars`, `SalesPrice`, `SalesDate`, `Volume`, `Classification`, `ExciseTax`, `VendorNo`, `VendorName` |
+| `PurchasesFINAL12312016.csv` | Detalle de compras por tienda y producto, con fechas de orden, recepción, factura y pago. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `VendorNumber`, `VendorName`, `PONumber`, `PODate`, `ReceivingDate`, `InvoiceDate`, `PayDate`, `PurchasePrice`, `Quantity`, `Dollars`, `Classification` |
+| `InvoicePurchases12312016.csv` | Facturas de compra a proveedores: cantidad, monto, flete y fechas. | `VendorNumber`, `VendorName`, `InvoiceDate`, `PONumber`, `PODate`, `PayDate`, `Quantity`, `Dollars`, `Freight`, `Approval` |
+| `BegInvFINAL12312016.csv` | Inventario inicial por tienda y producto (1 de enero de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `startDate` |
+| `EndInvFINAL12312016.csv` | Inventario final por tienda y producto (31 de diciembre de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `endDate` |
+| `2017PurchasePricesDec.csv` | Lista de precios de compra y venta de cada producto (diciembre de 2017). | `Brand`, `Description`, `Price`, `Size`, `Volume`, `Classification`, `PurchasePrice`, `VendorNumber`, `VendorName` |
 
 ## Pipeline del proyecto
 ![imagen de baner](<Picture/PIPELINE_BANNER.png>)
@@ -25,15 +38,15 @@ USE SCHEMA `default`;
 **2. Ingesta y creación de tablas (CTAS - Create Table As Select)**
 Se leen los CSV en crudo usando `read_files` y se crean las tablas definitivas aplicando las reglas de limpieza: estandarización de fechas (`to_date`), limpieza de texto (`TRIM`) y unificación de llaves primarias.
 ```sql
-CREATE OR REPLACE TABLE `workspace`.`default`.`SalesFINAL12312016` AS
+CREATE OR REPLACE TABLE ventas AS
 SELECT
-  InventoryId, Store, Brand, Description, Size, SalesQuantity, SalesDollars,
+  InventoryId, Store, Brand, Description, Size,
+  SalesQuantity, SalesDollars, SalesPrice,
   to_date(SalesDate, 'M/d/yyyy') AS SalesDate,
+  Volume, Classification, ExciseTax,
   VendorNo AS VendorNumber,
   TRIM(VendorName) AS VendorName
-FROM read_files(
-  '/Volumes/workspace/default/inventory_files/SalesFINAL12312016.csv',
-);
+FROM read_files('/Volumes/workspace/default/inventory_files/SalesFINAL12312016.csv');
 ```
 (Nota: Utilize este mismo patron para las demas tablas).
 
@@ -376,9 +389,8 @@ Hallazgos:![Imagen de query](<Picture/P10_sql.png>)
 
 4. **Pocos productos concentran las ventas:** 1,503 de 7,658 productos (19.6%) generan el 80% de las ventas, y la demanda está fragmentada: el líder, Smirnoff 80 Proof, vende 28,544 unidades y los 10 primeros suman solo el 7.0%. En el otro extremo, los 4,342 productos clase C aportan el 5% de las ventas pero retienen $7.8 M (11%) del inventario.
 
-5. **Margen por tipo:** El vino deja un margen promedio de 36.0% frente a 26.8% del licor, aunque su precio promedio es menor ($32.42 vs $53.83) y tiene muchos más productos (8,693 vs 3,566).
-
-6. **Demanda fragmentada:** el producto líder, Smirnoff 80 Proof, vendió 28,544 unidades, y los 10 primeros en total suman solo el 7.0% de las unidades en general.
+6. **Margen por tipo:** Impulsar la rotación del vino con promociones y exhibición, y revisar si su catálogo tan amplio está inmovilizando inventario. Antes de cambiar el mix, validar con el margen real ponderado por ventas, porque este cálculo usa precios de lista de 2017 y un promedio simple.
+.
 
 ## 📊 Recomendaciones
 1. **Dependencia de pocos proveedores:**
