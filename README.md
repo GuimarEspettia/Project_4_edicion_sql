@@ -342,9 +342,11 @@ ORDER BY a.ventas DESC;
  
 **Clasificación ABC de productos**
  
-_Hallazgos: ![Imagen de query](<Picture/P8_sql.png>)
+Hallazgos: ![Imagen de query](<Picture/P8_sql.png>)
 
+Dashboard: ![Imagen de query](<Picture/ABC_DASHBOARD.png>)
 
+<video src="Picture/1010.mp4" width="100%" controls></video>
  
 ---
  
