@@ -2,7 +2,8 @@
 ![imagen de baner](<Picture/SQL_BANER.png>)
 
 ## 📌Resumen (Overview)
-La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar más de **2.3 millones de registros** de 2016 y proporcionar recomendaciones sobre proveedores, lead time, análisis ABC, punto de reorden y EOQ. 
+La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar cerca de **3.9 millones de registros** (compras y facturas de 2016, ventas de enero–febrero de 2016, inventarios inicial y final, y lista de precios 2017) mediante **10 preguntas de negocio de dificultad progresiva** (básica, intermedia y avanzada), y proporcionar recomendaciones sobre **proveedores, compras, flete, lead time, margen y clasificación ABC** de productos.
+
 <p align="center">
  <a href="www.linkedin.com/in/guimar-espettia">
     <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" />
@@ -12,9 +13,9 @@ La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar
 Link de base de datos: https://www.kaggle.com/datasets/bhanupratapbiswas/inventory-analysis-case-study
 ## ⚙️ Configuración del Entorno e Ingesta de Datos (Setup)
 
-El proceso de carga inicial (ETL) extrae los archivos CSV directamente desde Databricks Volumes, aplica transformaciones de limpieza en tiempo de ejecución y materializa las tablas en el entorno de trabajo.
+El proceso de carga inicial  extrai los archivos CSV de Kaggle hacia directamente a Databricks Volumes, aplique las transformaciones de limpieza  y hize las tablas en el query.
 
-**1. Configuración del catálogo y esquema (Unity Catalog)**
+**1. Configuración del catálogo y esquema**
 Se define el entorno de base de datos donde persistirán las tablas analíticas limpias.
 ```sql
 USE CATALOG `workspace`;
@@ -22,7 +23,7 @@ USE SCHEMA `default`;
 ```
 
 **2. Ingesta y creación de tablas (CTAS - Create Table As Select)**
-Se leen los CSV en crudo usando `read_files` (con inferencia automática de esquemas) y se crean las tablas definitivas aplicando las reglas de limpieza: estandarización de fechas (`to_date` / `CAST`), limpieza de texto (`TRIM`) y unificación de llaves primarias.
+Se leen los CSV en crudo usando `read_files` y se crean las tablas definitivas aplicando las reglas de limpieza: estandarización de fechas (`to_date`), limpieza de texto (`TRIM`) y unificación de llaves primarias.
 ```sql
 CREATE OR REPLACE TABLE `workspace`.`default`.`SalesFINAL12312016` AS
 SELECT
@@ -37,7 +38,7 @@ FROM read_files(
 (Nota: Utilize este mismo patron para las demas tablas).
 
 
-## 🛠️ Limpieza de Datos y Transformaciones (ETL)
+## 🛠️ Limpieza de Datos y Transformaciones 
 
 **1. Estandarización de Fechas temporales**
 Conversión de formatos mixtos (`M/d/yyyy` y textos ISO) a tipo `DATE` para habilitar cálculos de *Lead Time* y días de pago.
@@ -49,18 +50,20 @@ CAST(PayDate AS DATE) AS PayDate
 
 
 **2. Homologación de llaves y limpieza de texto**
-Renombramiento de llaves principales (`VendorNumber`) y uso de `TRIM()` junto con agrupaciones (`MAX`) para evitar duplicados por espacios o errores de tipeo.
+Renombramiento de llaves principales (`VendorNumber`) y uso de `TRIM()` junto con agrupaciones para evitar duplicados por espacios o errores de tipeo.
 ```sql
 VendorNo AS VendorNumber,
 TRIM(VendorName) AS VendorName,
-MAX(VendorName) AS proveedor
 ```
 
  
 **3. Calidad de datos y prevención de errores matemáticos**
-Filtro de precios en cero para evitar divisiones por cero en el cálculo del margen, y `LEFT JOIN` con `COALESCE` para conservar productos sin stock en el reporte ABC.
+Filtro de precios en cero para evitar divisiones por cero en el cálculo del margen (Esto lo aplique en la pregunta 07 ), y `LEFT JOIN` con `COALESCE` para  evitar los `null` y conservar productos sin stock colocandole `0` en el reporte ABC (Esto lo aplique en la pregunta 08).
 ```sql
+-- P07
 WHERE Price > 0
+
+-- P08
 COALESCE(i.stock_final_unid, 0) AS stock_final_unid
 ```
 
@@ -85,7 +88,7 @@ Hallazgos:
 
 ![Imagen de query](<Picture/P1_sql.png>)
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -111,7 +114,6 @@ Hallazgos:
 ![Imagen de query](<Picture/P2_sql.png>)
  
  
-_Recomendación: (completar)_
  
 ---
  
@@ -139,7 +141,7 @@ Hallazgos:
 
  ![Imagen de query](<Picture/P3_sql.png>)
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -169,7 +171,7 @@ Hallazgos:
 
 ![Imagen de query](<Picture/P4_sql.png>)
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -195,7 +197,7 @@ ORDER BY mes, tipo_producto;
  
 Hallazgos: ![Imagen de query](<Picture/P5_sql.png>)
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -224,7 +226,7 @@ ORDER BY lead_time_prom_dias ASC;
 Hallazgos: ![Imagen de query](<Picture/P6_sql.png>)
  
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -250,8 +252,7 @@ ORDER BY tipo_producto;
  
 Hallazgos: ![Imagen de query](<Picture/P7_sql.png>)
  
- 
-_Recomendación: (completar)_
+
  
 ---
  
@@ -308,8 +309,8 @@ ORDER BY a.ventas DESC;
 **Clasificación ABC de productos**
  
 _Hallazgos: ![Imagen de query](<Picture/P8_sql.png>)
- 
-_Recomendación: (completar)_
+
+
  
 ---
  
@@ -336,7 +337,7 @@ Hallazgos:
 
 ![Imagen de query](<Picture/P9_sql.png>)
  
-_Recomendación: (completar)_
+
  
 ---
  
@@ -363,23 +364,38 @@ LIMIT 10;
  
 Hallazgos:![Imagen de query](<Picture/P10_sql.png>)
  
-_Recomendación: (completar)_
+
 
 ## 📊 Conclusiones y Hallazgos de Negocio
 
-1. **Alta concentración de riesgo en proveedores:** Los 10 proveedores principales concentran el **65.3%** del gasto total ($321.9 M). *Diageo North America* por sí solo representa el **15.8%**. **Acción:** Diversificar el pool de proveedores y renegociar Acuerdos de Nivel de Servicio (SLA) para mitigar riesgos de desabastecimiento.
+1. **Concentración de proveedores:** Los 10 principales concentran el 65.3% de los $321.9 M comprados, y solo Diageo North America el 15.8%. En los productos clase A el peso crece: los 10 principales proveedores llegan al 68.7% de las ventas y Diageo al 17.3%.
 
-2. **Volatilidad en Tiempos de Entrega (Lead Time):** El promedio global es de 7.6 días (pico máximo de 14), pero **68 de los 126 proveedores** superan la media. **Acción:** El cálculo del Stock de Seguridad y ROP no debe ser estándar; requiere parametrización dinámica por proveedor.
+2. **Compras al alza, con volatilidad:** Pasan de $19.1 M en enero a un máximo de $32.2 M en julio. El mayor salto fue en mayo (+$6.9 M, +32%) y las mayores caídas en septiembre (−$3.9 M) y noviembre (−$4.6 M).
 
-3. **Capital inmovilizado al alza:** El valor del inventario experimentó un crecimiento del **17%** (de $68.1 M a $79.7 M), estando el **51.8%** concentrado en apenas 10 ciudades. **Acción:** Priorizar auditorías físicas y rebalanceo de stock en estas ubicaciones clave.
+3. **Flete creciente:** Sube de $105 K en enero a un máximo de $176 K en agosto, y el total supera los $1.6 M. Aun así, equivale solo al 0.5% de lo comprado.
 
-4. **Ineficiencia en productos Clase C (Análisis ABC):** Analizando el bimestre Ene-Feb, el **20%** de las marcas (1,503) generan el 80% de los ingresos (Clase A). Por el contrario, las 4,342 marcas **Clase C** (5% de ventas) retienen **$7.8 M (11%)** de capital inmovilizado. **Acción:** Ejecutar estrategias de liquidación o cese de reabastecimiento automático para la Clase C.
+4. **Pocos productos concentran las ventas:** 1,503 de 7,658 productos (19.6%) generan el 80% de las ventas, y la demanda está fragmentada: el líder, Smirnoff 80 Proof, vende 28,544 unidades y los 10 primeros suman solo el 7.0%. En el otro extremo, los 4,342 productos clase C aportan el 5% de las ventas pero retienen $7.8 M (11%) del inventario.
 
-5. **Palancas de ahorro mal enfocadas:** El gasto logístico por flete representa apenas el **0.51%** de la facturación y su varianza entre proveedores es nula. **Acción:** Trasladar el esfuerzo de negociación logística hacia la optimización de plazos de pago (actualmente promediando 35 días) y el ajuste de Lotes Económicos de Compra (EOQ).
+5. **Margen por tipo:** El vino deja un margen promedio de 36.0% frente a 26.8% del licor, aunque su precio promedio es menor ($32.42 vs $53.83) y tiene muchos más productos (8,693 vs 3,566).
 
-6. **Rotación crítica de catálogo:** 31,553 combinaciones tienda-marca ($7.3 M iniciales) desaparecieron al cierre del periodo, siendo sustituidas por 49,513 nuevas combinaciones. **Acción:** Investigar a nivel de piso si corresponden a quiebres de stock severos o descontinuaciones de temporada estratégicas.
+6. **Demanda fragmentada:** el producto líder, Smirnoff 80 Proof, vendió 28,544 unidades, y los 10 primeros en total suman solo el 7.0% de las unidades en general.
 
+## 📊 Recomendaciones
+1. **Dependencia de pocos proveedores:**
+Negociar contratos de volumen y mejores condiciones de pago con los 3 primeros proveedores, que suman cerca de un tercio de las compras. En paralelo, identificar proveedores alternos para las marcas clase A, para no quedar expuestos si un proveedor falla o sube precios.
 
+2. **Compras con picos y caídas bruscas:** Pasar de compras reactivas a un plan mensual basado en el pronóstico de demanda, con topes de compra por mes. Así se evita acumular inventario en los picos y quedarse corto después. Antes de fijar los topes, validar con las ventas del año completo.
+
+3. **Flete creciente, pero no es la palanca principal:** 
+ Consolidar pedidos pequeños de un mismo proveedor en menos facturas, para reducir el flete sin aumentar el inventario. Cada 10% de ahorro equivale a unos $164 K al año. Es una mejora útil, pero secundaria frente a la gestión del inventario.
+
+4. **Lead time desigual entre proveedores:** Calcular el stock de seguridad por proveedor y no con un plazo único. Dar prioridad a los proveedores lentos que además tienen alto volumen de compra, para renegociar plazos o adelantar sus órdenes.
+
+5. **Pocos productos generan casi todas las ventas, y la cola inmoviliza capital:** Gestionar cada clase con una regla distinta.
+
+   - Clase A: inventario de seguridad alto y revisión frecuente. Hay 35 productos A sin stock al cierre, y conviene confirmar si son quiebres reales para reponerlos primero.
+
+    - Clase C: reducir las órdenes de reposición, liquidar los de menor movimiento y depurar el catálogo. Recortar un 20% de ese stock liberaría cerca de $1.6 M de capital de trabajo.
 
 
 
