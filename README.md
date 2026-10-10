@@ -24,6 +24,27 @@ La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar
 ## Pipeline del proyecto
 ![imagen de baner](<Picture/PIPELINE_BANNER.png>)
 Link de base de datos: https://www.kaggle.com/datasets/bhanupratapbiswas/inventory-analysis-case-study
+
+Pregunta #1: ¿Cuáles son los 10 productos más vendidos por unidades?
+ 
+Pregunta #2: ¿Cuántas facturas y cuánto flete total se registran cada mes?
+
+Pregunta #3: ¿Quiénes son los 10 principales proveedores por monto comprado en 2016 y qué porcentaje del total representan?
+
+Pregunta #4: ¿Cómo evolucionan las compras mensuales y cuánto cambian frente al mes anterior?
+
+Pregunta #5: ¿Cómo se comportan las unidades, las ventas y el precio promedio por mes y tipo de producto?
+
+Pregunta #6: ¿Cuál es el lead time promedio de cada proveedor (recepción menos orden de compra)?
+
+Pregunta #7: ¿Cuál es el margen promedio por tipo de producto (precio de venta vs. precio de compra)?
+
+Pregunta #8: ¿Cómo se clasifican los productos según el análisis ABC?
+
+Pregunta #9: ¿Cuántos productos tiene cada clase ABC y qué porcentaje de las ventas y del capital en inventario concentra?
+
+Pregunta #10: ¿Qué proveedores concentran más ventas de productos clase A (dependencia de proveedores)?
+
 ## ⚙️ Configuración del Entorno e Ingesta de Datos (Setup)
 
 El proceso de carga inicial  extrai los archivos CSV de Kaggle hacia directamente a Databricks Volumes, aplique las transformaciones de limpieza  y hize las tablas en el query.
