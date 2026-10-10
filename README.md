@@ -14,12 +14,12 @@ La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar
 
 | CSV | Resumen | Columnas |
 |---|---|---|
-| `SalesFINAL12312016.csv` | Ventas diarias por tienda y producto. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `SalesQuantity`, `SalesDollars`, `SalesPrice`, `SalesDate`, `Volume`, `Classification`, `ExciseTax`, `VendorNo`, `VendorName` |
-| `PurchasesFINAL12312016.csv` | Detalle de compras por tienda y producto, con fechas de orden, recepción, factura y pago. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `VendorNumber`, `VendorName`, `PONumber`, `PODate`, `ReceivingDate`, `InvoiceDate`, `PayDate`, `PurchasePrice`, `Quantity`, `Dollars`, `Classification` |
-| `InvoicePurchases12312016.csv` | Facturas de compra a proveedores: cantidad, monto, flete y fechas. | `VendorNumber`, `VendorName`, `InvoiceDate`, `PONumber`, `PODate`, `PayDate`, `Quantity`, `Dollars`, `Freight`, `Approval` |
-| `BegInvFINAL12312016.csv` | Inventario inicial por tienda y producto (1 de enero de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `startDate` |
-| `EndInvFINAL12312016.csv` | Inventario final por tienda y producto (31 de diciembre de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `endDate` |
-| `2017PurchasePricesDec.csv` | Lista de precios de compra y venta de cada producto (diciembre de 2017). | `Brand`, `Description`, `Price`, `Size`, `Volume`, `Classification`, `PurchasePrice`, `VendorNumber`, `VendorName` |
+| `SalesFINAL12312016.csv` 	ventas | Ventas diarias por tienda y producto. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `SalesQuantity`, `SalesDollars`, `SalesPrice`, `SalesDate`, `Volume`, `Classification`, `ExciseTax`, `VendorNo`, `VendorName` |
+| `PurchasesFINAL12312016.csv` compras | Detalle de compras por tienda y producto, con fechas de orden, recepción, factura y pago. | `InventoryId`, `Store`, `Brand`, `Description`, `Size`, `VendorNumber`, `VendorName`, `PONumber`, `PODate`, `ReceivingDate`, `InvoiceDate`, `PayDate`, `PurchasePrice`, `Quantity`, `Dollars`, `Classification` |
+| `InvoicePurchases12312016.csv` 	facturas_compra | Facturas de compra a proveedores: cantidad, monto, flete y fechas. | `VendorNumber`, `VendorName`, `InvoiceDate`, `PONumber`, `PODate`, `PayDate`, `Quantity`, `Dollars`, `Freight`, `Approval` |
+| `BegInvFINAL12312016.csv` 	inventario_inicial | Inventario inicial por tienda y producto (1 de enero de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `startDate` |
+| `EndInvFINAL12312016.csv` inventario_final | Inventario final por tienda y producto (31 de diciembre de 2016). | `InventoryId`, `Store`, `City`, `Brand`, `Description`, `Size`, `onHand`, `Price`, `endDate` |
+| `2017PurchasePricesDec.csv` lista_precios_2017 | Lista de precios de compra y venta de cada producto (diciembre de 2017). | `Brand`, `Description`, `Price`, `Size`, `Volume`, `Classification`, `PurchasePrice`, `VendorNumber`, `VendorName` |
 
 ## Pipeline del proyecto
 ![imagen de baner](<Picture/PIPELINE_BANNER.png>)
