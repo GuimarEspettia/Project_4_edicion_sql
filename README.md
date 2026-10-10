@@ -1,4 +1,4 @@
-# Proyecto SQL: Analisis de Inventario Logístico
+# Proyecto SQL: Análisis de Inventario, Compras y Proveedores en una Distribuidora Logística.
 ![imagen de baner](<Picture/SQL_BANER.png>)
 
 ## 📌Resumen (Overview)
