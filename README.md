@@ -5,7 +5,7 @@
 La gerencia de una empresa distribuidora **(sector logístico)** desea optimizar su inventario, reducir los quiebres de stock y liberar capital de trabajo, pero no cuenta con una visión clara de sus datos de compras, ventas e inventario. Mi objetivo es utilizar **SQL** dentro de **Databricks** para analizar cerca de **3.9 millones de registros** (compras y facturas de 2016, ventas de enero–febrero de 2016, inventarios inicial y final, y lista de precios 2017) mediante **10 preguntas de negocio de dificultad progresiva** (básica, intermedia y avanzada), y proporcionar recomendaciones sobre **proveedores, compras, flete, lead time, margen y clasificación ABC** de productos.
 
 <p align="center">
- <a href="www.linkedin.com/in/guimar-espettia">
+ <a href="https://www.linkedin.com/in/guimar-espettia">
     <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" />
 
 ## Pipeline del proyecto
